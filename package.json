@@ -1,0 +1,13 @@
+{
+  "name": "finance-news-bot",
+  "version": "1.0.0",
+  "description": "7x24 财经资讯播报机器人",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}
