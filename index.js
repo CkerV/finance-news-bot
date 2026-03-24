@@ -43,7 +43,7 @@ async function sendToWechat(news) {
     template: 'html'
   };
 
-  const response = await fetch('https://www.pushplus.plus/send', {
+  const response = await fetch('http://www.pushplus.plus/send', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(message)
@@ -53,16 +53,38 @@ async function sendToWechat(news) {
   if (result.code !== 200) {
     throw new Error(`发送失败: ${result.msg}`);
   }
-  return true;
+  return result;
+}
+
+// 发送测试消息
+async function sendTestMessage() {
+  const testNews = {
+    title: '财经快讯测试消息',
+    content_text: '这是一条测试消息，如果你收到这条消息，说明推送配置成功！',
+    display_time: Math.floor(Date.now() / 1000),
+    uri: 'https://wallstreetcn.com/'
+  };
+
+  console.log('发送测试消息...');
+  const result = await sendToWechat(testNews);
+  console.log('测试消息发送成功! 流水号:', result.data);
 }
 
 async function main() {
-  console.log('开始检查最新资讯...');
+  const isTestMode = process.argv.includes('--test');
 
   if (!PUSHPLUS_TOKEN) {
     console.error('错误: 未设置 PUSHPLUS_TOKEN 环境变量');
     process.exit(1);
   }
+
+  // 测试模式
+  if (isTestMode) {
+    await sendTestMessage();
+    return;
+  }
+
+  console.log('开始检查最新资讯...');
 
   const lastId = getLastNewsId();
   console.log('上次发送的新闻ID:', lastId);
