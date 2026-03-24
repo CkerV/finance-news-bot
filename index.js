@@ -30,16 +30,36 @@ async function fetchLatestNews() {
 }
 
 // 发送 PushPlus 消息到微信
-async function sendToWechat(news) {
-  const title = news.title || news.highlight_title || '财经快讯';
-  const content = news.content_text;
-  const time = new Date(news.display_time * 1000).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
-  const link = news.uri;
+async function sendToWechat(newsList) {
+  const count = newsList.length;
+  const title = `财经快讯 (${count}条)`;
+
+  // 按时间正序排列（旧的在前）
+  const sortedNews = [...newsList].reverse();
+
+  const content = sortedNews.map((news, index) => {
+    const newsTitle = news.title || news.highlight_title || '';
+    const newsContent = news.content_text;
+    const time = new Date(news.display_time * 1000).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    const link = news.uri;
+
+    return `
+<div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #eee;">
+  <div style="color: #666; font-size: 12px;">${time}</div>
+  ${newsTitle ? `<div style="font-weight: bold; margin: 4px 0;">${newsTitle}</div>` : ''}
+  <div style="color: #333;">${newsContent}</div>
+  <a href="${link}" style="color: #1890ff; font-size: 12px;">查看详情</a>
+</div>`;
+  }).join('');
 
   const message = {
     token: PUSHPLUS_TOKEN,
     title: title,
-    content: `${content}<br><br><small>${time}</small><br><a href="${link}">查看详情</a>`,
+    content: `<div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+<h3 style="margin: 0 0 16px 0;">📢 财经快讯</h3>
+<p style="color: #999; font-size: 12px;">共 ${count} 条资讯</p>
+${content}
+</div>`,
     template: 'html'
   };
 
@@ -58,15 +78,15 @@ async function sendToWechat(news) {
 
 // 发送测试消息
 async function sendTestMessage() {
-  const testNews = {
+  const testNewsList = [{
     title: '财经快讯测试消息',
     content_text: '这是一条测试消息，如果你收到这条消息，说明推送配置成功！',
     display_time: Math.floor(Date.now() / 1000),
     uri: 'https://wallstreetcn.com/'
-  };
+  }];
 
   console.log('发送测试消息...');
-  const result = await sendToWechat(testNews);
+  const result = await sendToWechat(testNewsList);
   console.log('测试消息发送成功! 流水号:', result.data);
 }
 
@@ -99,11 +119,19 @@ async function main() {
     return;
   }
 
-  // 如果有新消息
-  if (latestNews.id > lastId) {
-    console.log('发现新资讯:', latestNews.id, latestNews.content_text.substring(0, 50));
-    await sendToWechat(latestNews);
+  // 获取所有比 lastId 更新的新闻
+  const newNewsList = newsList.filter(news => news.id > lastId);
+
+  if (newNewsList.length > 0) {
+    console.log(`发现 ${newNewsList.length} 条新资讯`);
+    newNewsList.forEach((news, i) => {
+      console.log(`  ${i + 1}. [${news.id}] ${news.content_text.substring(0, 30)}...`);
+    });
+
+    await sendToWechat(newNewsList);
     console.log('发送成功!');
+
+    // 保存最新一条的 ID
     saveLastNewsId(latestNews.id);
   } else {
     console.log('没有新资讯');
