@@ -1,19 +1,19 @@
 # Finance News Bot
 
-7x24 小时财经资讯播报机器人，通过企业微信推送华尔街见闻快讯。
+7x24 小时财经资讯播报机器人，通过 PushPlus 推送华尔街见闻快讯到微信。
 
 ## 功能
 
 - 定时获取华尔街见闻 7x24 快讯
 - 每次只推送最新的一条消息
-- 通过企业微信机器人通知
+- 通过 PushPlus 推送到个人微信
 
 ## 部署步骤
 
-### 1. 创建企业微信机器人
+### 1. 获取 PushPlus Token
 
-1. 在企业微信群里，点击群设置 → 群机器人 → 添加机器人
-2. 复制 Webhook 地址（格式：`https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx`）
+1. 微信扫码关注公众号「PushPlus推送加」
+2. 关注后，在公众号菜单点击「功能」→「Token」获取你的 token
 
 ### 2. Fork 或创建仓库
 
@@ -21,14 +21,14 @@
 
 ### 3. 设置 GitHub Secrets
 
-在仓库设置中添加 Secret：
-- `WECHAT_WEBHOOK_URL`: 你的企业微信机器人 Webhook 地址
+在仓库 Settings → Secrets and variables → Actions 中添加：
+- `PUSHPLUS_TOKEN`: 你的 PushPlus token
 
 ### 4. 启用 GitHub Actions
 
 1. 进入仓库的 Actions 页面
 2. 启用 workflow
-3. 可以手动触发测试，或等待定时任务自动运行
+3. 手动触发一次测试
 
 ## 本地测试
 
@@ -37,7 +37,7 @@
 npm install
 
 # 设置环境变量
-export WECHAT_WEBHOOK_URL="你的webhook地址"
+export PUSHPLUS_TOKEN="你的token"
 
 # 运行
 npm start

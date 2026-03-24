@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 
 const API_URL = 'https://api-one-wscn.awtmt.com/apiv1/search/live?channel=global-channel&limit=20&score=2';
-const WEBHOOK_URL = process.env.WECHAT_WEBHOOK_URL;
+const PUSHPLUS_TOKEN = process.env.PUSHPLUS_TOKEN;
 const LAST_NEWS_FILE = './last-news.json';
 
 // 读取上次发送的新闻ID
@@ -29,7 +29,7 @@ async function fetchLatestNews() {
   throw new Error('获取资讯失败');
 }
 
-// 发送企业微信消息
+// 发送 PushPlus 消息到微信
 async function sendToWechat(news) {
   const title = news.title || news.highlight_title || '财经快讯';
   const content = news.content_text;
@@ -37,21 +37,21 @@ async function sendToWechat(news) {
   const link = news.uri;
 
   const message = {
-    msgtype: 'markdown',
-    markdown: {
-      content: `### ${title}\n\n${content}\n\n> ${time}\n[查看详情](${link})`
-    }
+    token: PUSHPLUS_TOKEN,
+    title: title,
+    content: `${content}<br><br><small>${time}</small><br><a href="${link}">查看详情</a>`,
+    template: 'html'
   };
 
-  const response = await fetch(WEBHOOK_URL, {
+  const response = await fetch('https://www.pushplus.plus/send', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(message)
   });
 
   const result = await response.json();
-  if (result.errcode !== 0) {
-    throw new Error(`发送失败: ${result.errmsg}`);
+  if (result.code !== 200) {
+    throw new Error(`发送失败: ${result.msg}`);
   }
   return true;
 }
@@ -59,8 +59,8 @@ async function sendToWechat(news) {
 async function main() {
   console.log('开始检查最新资讯...');
 
-  if (!WEBHOOK_URL) {
-    console.error('错误: 未设置 WECHAT_WEBHOOK_URL 环境变量');
+  if (!PUSHPLUS_TOKEN) {
+    console.error('错误: 未设置 PUSHPLUS_TOKEN 环境变量');
     process.exit(1);
   }
 
